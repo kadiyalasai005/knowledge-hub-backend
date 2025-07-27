@@ -19,7 +19,7 @@ chromadb==1.0.7 # Latest stable
 # REMOVED bcrypt<4.0 - Let passlib handle it
 passlib[bcrypt]==1.7.4 # Latest stable (no major update recently)
 python-jose[cryptography]==3.3.0 # Keep pinned or check latest
-python-multipart==0.0.9 # Keep pinned or check latest
+python-multipart==0.0.18 # Keep pinned or check latest
 email-validator>=2.0.0 # Keep range or pin
 
 # Background Tasks (Celery + Redis)
