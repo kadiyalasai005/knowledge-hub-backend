@@ -1,0 +1,98 @@
+# docker-compose.yml
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: knowledge_hub_postgres
+    volumes:
+      # Persist data using a named volume
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      # Read credentials and DB name from .env file (or use defaults)
+      POSTGRES_USER: ${POSTGRES_USER:-myuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_hub_db}
+    # Remove port exposure - database should only be accessible within the Docker network
+    # ports:
+    #   - "5432:5432"
+    networks:
+      - knowledge_hub_net
+    restart: unless-stopped
+
+  # Redis Service (for Celery)
+  redis:
+    image: redis:7-alpine
+    container_name: knowledge_hub_redis
+    # Remove port exposure - Redis should only be accessible within the Docker network
+    # ports:
+    #   - "6379:6379"
+    networks:
+      - knowledge_hub_net
+    restart: unless-stopped
+
+  # FastAPI Backend Service
+  backend:
+    container_name: knowledge_hub_backend_api
+    build: . # Build the image from the Dockerfile in the current directory
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload # Command to run FastAPI with reload
+    volumes:
+      # Mount current directory into /app in container for live code reload
+      - .:/app
+      # Mount your Google Cloud credentials file into the container (read-only)
+      # Replace with your actual credentials path
+      - ~/.config/gcloud/application_default_credentials.json:/root/.config/gcloud/application_default_credentials.json:ro
+    ports:
+      # Map host port 8000 to container port 8000
+      - "8000:8000"
+    env_file:
+      # Load environment variables from .env file
+      - .env
+    environment:
+      # Tell Google libraries where to find credentials *inside* the container
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      # Required for Uvicorn reload on some systems / Windows compat
+      - WATCHFILES_FORCE_POLLING=true
+    depends_on:
+      # Ensure DB and Redis start before the backend
+      - db
+      - redis
+    networks:
+      - knowledge_hub_net
+    restart: unless-stopped
+
+  # Celery Worker Service
+  worker:
+    container_name: knowledge_hub_worker
+    build: . # Use the same image built for the backend
+    command: celery -A tasks.celery_app.celery_app worker --loglevel=info # Command to start worker
+    volumes:
+      # Mount current directory into /app in container to access code
+      - .:/app
+      # Mount your Google Cloud credentials file into the container (read-only)
+      # Replace with your actual credentials path
+      - ~/.config/gcloud/application_default_credentials.json:/root/.config/gcloud/application_default_credentials.json:ro
+    env_file:
+      # Load same environment variables as backend
+      - .env
+    environment:
+      # Tell Google libraries where to find credentials *inside* the container
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      # Required for Uvicorn reload on some systems / Windows compat
+    depends_on:
+      # Ensure DB and Redis start before the worker
+      - redis
+      - db
+    networks:
+      - knowledge_hub_net
+    restart: unless-stopped
+
+# Define named volume for PostgreSQL data persistence
+volumes:
+  postgres_data:
+    driver: local
+
+# Define bridge network for services to communicate using service names (e.g., 'db', 'redis')
+networks:
+  knowledge_hub_net:
+    driver: bridge

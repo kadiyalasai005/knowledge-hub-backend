@@ -1,0 +1,46 @@
+# requirements.txt
+
+# Core API
+fastapi==0.115.9 # Example: Use latest stable found on PyPI
+uvicorn[standard]>=0.29.0 # Example: Can use range or pin
+
+python-dotenv>=1.0.0
+pydantic-settings==2.3.0
+
+# Database (PostgreSQL + SQLAlchemy)
+sqlalchemy==2.0.40 # Latest stable 2.0.x
+psycopg2-binary>=2.9.9 # Latest binary is usually fine
+alembic>=1.13.0 # Latest stable
+
+# Vector DB
+chromadb==1.0.7 # Latest stable
+
+# Authentication & Security
+# REMOVED bcrypt<4.0 - Let passlib handle it
+passlib[bcrypt]==1.7.4 # Latest stable (no major update recently)
+python-jose[cryptography]==3.3.0 # Keep pinned or check latest
+python-multipart==0.0.9 # Keep pinned or check latest
+email-validator>=2.0.0 # Keep range or pin
+
+# Background Tasks (Celery + Redis)
+celery[redis]==5.5.2 # Latest stable
+redis[hiredis]==5.0.7 # Latest stable 5.x
+
+# Google Cloud & AI
+#protobuf==3.20.3 # !!! KEEP PINNED to 3.20.x !!! Important for compatibility
+google-cloud-storage==2.19.0 # Latest stable
+google-cloud-aiplatform==1.87.0 # Latest stable
+google-cloud-documentai==3.4.0 # Latest stable
+# google-api-core, googleapis-common-protos etc handled by above usually
+
+# LLM / Embeddings (Keep flexible or pin if needed)
+openai>=1.0.0
+tiktoken>=0.5.0
+
+# SSE
+sse-starlette>=2.0.0 # Example: Use latest stable or keep range
+
+# Document Processing
+PyMuPDF>=1.24.0 # Use latest stable or keep range
+python-docx>=1.1.0 # Use latest stable or keep range
+# Werkzeug>=3.0.0 # Optional
